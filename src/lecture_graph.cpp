@@ -14,9 +14,15 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/properties.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/named_function_params.hpp>
+#include <boost/graph/graph_utility.hpp>
+#include <boost/property_map/property_map_iterator.hpp>
 #include <boost/property_map/property_map.hpp>
-#include <boost/graph/properties.hpp>
-#include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/lookup_edge.hpp>
+#include <boost/graph/random.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 
 
 using namespace std;
@@ -40,6 +46,8 @@ struct vertex_info {
   int r,g,b;
   float x,y;
   long count;
+  int id;
+
 
 };
 
@@ -51,12 +59,13 @@ struct edge_info {
    long ctime;
 };
 
-/* Define the type of graph */
-typedef boost::adjacency_list<
-   boost::vecS, boost::vecS, boost::bidirectionalS,
-   vertex_info,
-   edge_info
-> Graph_t;
+
+
+/*def graph*/
+typedef adjacency_list <boost::listS, boost::vecS, boost::directedS,vertex_info,
+		   edge_info >  Graph_t;
+
+
 
 
 /* Declare dynamic properties for graphml format. */
@@ -66,7 +75,22 @@ typedef graph_traits < Graph_t >::vertex_iterator VertexIterator;
 typedef graph_traits < Graph_t >::edge_iterator EdgeIterator;
 typedef graph_traits < Graph_t >::adjacency_iterator AdjacencyIterator;
 
+typedef graph_traits < Graph_t >::vertex_descriptor vertex_descriptor;
+typedef graph_traits < Graph_t >::edge_descriptor edge_descriptor;
+
 typedef property_map < Graph_t, vertex_index_t >::type IndexMap;
+
+
+
+/*property map*/
+
+
+/*in & out edges*/
+typedef graph_traits<Graph_t>::in_edge_iterator inEdge;
+typedef graph_traits<Graph_t>::out_edge_iterator outEdge;
+
+
+/*id vertex*/
 
 
 /*  Declare function prototype */
@@ -80,6 +104,7 @@ void readGraphMLFile(Graph_t& graphToBuild, string gmlFileToRead);
  */
 void readGraphMLFile ( Graph_t& designG, string fileName )
 {
+	 dp.property("id", get(&vertex_info::id, designG));
   dp.property("name", get(&vertex_info::name, designG));
   dp.property("label", get(&vertex_info::label, designG));
   dp.property("asn", get(&vertex_info::asn, designG));
@@ -100,7 +125,7 @@ void readGraphMLFile ( Graph_t& designG, string fileName )
   dp.property("weight", get(&edge_info::weight, designG));
   dp.property("count", get(&edge_info::count, designG));
   dp.property("ftime", get(&edge_info::ftime, designG));
-    dp.property("ctime", get(&edge_info::ctime, designG));
+  dp.property("ctime", get(&edge_info::ctime, designG));
 
   ifstream gmlStream;
   gmlStream.open(fileName.c_str(), ifstream::in);
@@ -120,47 +145,199 @@ void readGraphMLFile ( Graph_t& designG, string fileName )
 int main(int argc, char** argv)
 {
 
+
   string file = "/home/lamure/Documents/developpement/test.graphml";
 
   Graph_t graph_t;
+
+
 
   ifstream is(file.c_str());
 
   readGraphMLFile(graph_t, file);
 
-  int i = 0 ;
+  int N = num_vertices(graph_t);
 
   /* property map iterator pour rechercher des objets qui nous interessent dans le graphe*/
 
-  const IndexMap index = get(vertex_index, graph_t);
+
 
   /* Puis après avoir ajouté des vertex et edges, je peux accéder par exemple à la liste des vertex comme suite: */
     /* Affiche le nom des sommets */
+
+  int selector =  0 ;
+  vertex_descriptor node_select;
+
+  vertex_descriptor u_in,u_out,v_in,v_out;
+
+  std::pair<inEdge, inEdge> inedge;
+
+  std::pair<outEdge, outEdge> outedge;
+
+  //node_id index = get(vertex_index,graph_t);
+
   std::pair<VertexIterator, VertexIterator> it_2 = boost::vertices(graph_t);
-  for( ; it_2.first != it_2.second; ++it_2.first)
+ /*for( ; it_2.first != it_2.second; ++it_2.first)
   {
-	  i++;
-     std::cout << get(boost::vertex_bundle, graph_t)[*it_2.first].name << std::endl;
+	  node_select = *it_2.first;
+	  if(selector < 10)
+	  {
+		test.added_vertex(node_select);
+		cout << "node is : " << node_select << endl;
+		outedge = out_edges(node_select,graph_t);
+		inedge = in_edges(node_select,graph_t);
+
+		/* arrive à notre noeuds
+		for(inEdge in_e = inedge.first ; in_e != inedge.second; ++in_e) {
+
+
+				  u_in = source(*in_e, graph_t);
+				  v_in = target(*in_e, graph_t);
+
+			long a = index[u_in];
+			long b = index[v_in];
+
+			cout << selector << " : " << a << " --> " << b   << endl;
+		}
+
+		/* depuis notre noeuds vers un autre
+		for(outEdge out_e =  outedge.first ; out_e != outedge.second; ++out_e) {
+
+			 u_out = source(*out_e, graph_t);
+			 v_out = target(*out_e, graph_t);
+
+						long a1 = index[u_out];
+						long b1 = index[v_out];
+
+						cout << selector << " : " << a1 << " --> " << b1   << endl;
+				}
+
+	  }
+
+	  selector++;
+
+  }
+*/
+
+
+ // print_graph(test);
+
+  pair<EdgeIterator, EdgeIterator> ei = edges(graph_t);
+
+
+  //vertex_descriptor u,v;
+  //vector<vector<int> > mat(N,vector<int>(N));
+
+ /* for(EdgeIterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter) {
+
+	  u = source(*edge_iter, graph_t);
+	            v = target(*edge_iter, graph_t);
+
+	         //   node_id index = get(vertex_index, graph_t)[u];
+
+	            long a = index[u];
+	            long b = index[v];
   }
 
+  cout << num_edges(graph_t)<< '\n';
 
-  cout << "nb sommet " << i <<endl;
 
-  queue < graph::vertex_descriptor> q;
 
-  bfs_visitor<null_visitor> vis;
+  for(EdgeIterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter) {
 
-  breadth_first_search(graph_t, topLeft, q, vis, index.data());
+	  u = source(*edge_iter, graph_t);
+	  v = target(*edge_iter, graph_t);
 
-  /* pair<EdgeIterator, EdgeIterator> it_e;
+	  //   node_id index = get(vertex_index, graph_t)[u];
 
-  for( it_e =  edges(graph_t); it_e.first != it_e.second; ++it_e.first)
-  {
-	  cout << get(boost::edge_bundle, graph_t)[*it_e.first].weight << endl;
-  }
+	  long a = index[u];
+	  long b = index[v];
+
+	  if( a < 10 && b < 10)
+	  {
+		  add_edge(vertex(a,test),vertex(b,test),)
+	  }
+		  mat[a][b] = get(boost::edge_bundle, graph_t)[*ei.first].count;
+		  mat[b][a] = get(boost::edge_bundle, graph_t)[*ei.first].count;
+
+	  }
+
+*/
+ /*int i = 0;
+for (EdgeIterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter){
+
+
+          u = source(*edge_iter, graph_t);
+          v = target(*edge_iter, graph_t);
+
+
+          long a = index[u];
+          long b = index[v];
+
+         mat[a][b] = 1;
+         mat[b][a] = 1;
+          cout << i << " : " << a << " --> " << b   << endl;
+          i++;
+	  }
+
+
+ for (int i=0; i<20; i++){
+        for (int j=0; j<20; j++){
+            cout << mat[i][j]<<" ";
+        }
+        cout <<endl;
+    }
+
+
 
 
 */
+
+  /* v2 , prendre noeud arrivée et de départ, chercher les plus court voisins et développé la matrice OT*/
+
+  vertex_descriptor noeud1, noeud2;
+
+
+
+
+
+  IndexMap index = get(vertex_index,graph_t);
+
+
+  graph_traits<Graph_t>::vertex_iterator i, iend;
+
+  pair<AdjacencyIterator,AdjacencyIterator> voisins = adjacent_vertices(vertex(150,graph_t),graph_t);
+
+  for(; voisins.first != voisins.second ; ++voisins.first)
+  {
+	  cout << index[*voisins.first] << endl;
+
+  }
+
+  noeud1 = vertex(150,graph_t);
+
+  cout << get(vertex_bundle,graph_t)[noeud1].name  << endl;
+
+
+
+  std::vector<vertex_descriptor> p(num_vertices(graph_t));
+  std::vector<int> d(num_vertices(graph_t));
+
+
+
+  	  dijkstra_shortest_paths(graph_t, noeud1,
+                              predecessor_map(boost::make_iterator_property_map(p.begin(), get(boost::vertex_index, graph_t))).
+                              distance_map(boost::make_iterator_property_map(d.begin(), get(boost::vertex_index, graph_t))));
+
+      std::cout << "distances and parents:" << std::endl;
+      graph_traits < Graph_t >::vertex_iterator vi, vend;
+      for (boost::tie(vi, vend) = vertices(graph_t); vi != vend; ++vi) {
+        std::cout << "distance(" << get(vertex_bundle,graph_t)[*vi].name << ") = " << d[*vi] << ", ";
+        std::cout << "parent(" << get(vertex_bundle,graph_t)[*vi].name << ") = " << get(vertex_bundle,graph_t)[p[*vi]].name << std::endl;
+      }
+      std::cout << std::endl;
+
+
 }
 
 
