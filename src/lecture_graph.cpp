@@ -8,6 +8,14 @@
 #include <string>
 #include <fstream>
 #include <utility>
+#include <iostream>
+#include <cstring>
+#include <vector>
+
+
+#include <boost/thread.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/pthread/condition_variable.hpp>
 
 #include <boost/graph/graphml.hpp>
 #include <boost/config.hpp>
@@ -24,9 +32,10 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-
 using namespace std;
 using namespace boost;
+
+
 
 //On définit les caractéristiques de nos noeuds, arc pour notre graphe
 
@@ -80,6 +89,7 @@ typedef graph_traits < Graph_t >::edge_descriptor edge_descriptor;
 
 typedef property_map < Graph_t, vertex_index_t >::type IndexMap;
 
+typedef boost::iterator_property_map < vertex_descriptor*, IndexMap, vertex_descriptor, vertex_descriptor& > DistanceMap;
 
 
 /*property map*/
@@ -104,7 +114,7 @@ void readGraphMLFile(Graph_t& graphToBuild, string gmlFileToRead);
  */
 void readGraphMLFile ( Graph_t& designG, string fileName )
 {
-	 dp.property("id", get(&vertex_info::id, designG));
+  dp.property("id", get(&vertex_info::id, designG));
   dp.property("name", get(&vertex_info::name, designG));
   dp.property("label", get(&vertex_info::label, designG));
   dp.property("asn", get(&vertex_info::asn, designG));
@@ -127,6 +137,8 @@ void readGraphMLFile ( Graph_t& designG, string fileName )
   dp.property("ftime", get(&edge_info::ftime, designG));
   dp.property("ctime", get(&edge_info::ctime, designG));
 
+
+
   ifstream gmlStream;
   gmlStream.open(fileName.c_str(), ifstream::in);
 
@@ -142,6 +154,86 @@ void readGraphMLFile ( Graph_t& designG, string fileName )
  *  Description:
  * =====================================================================================
  */
+
+
+void calcul_chemin(Graph_t graph_t,vertex_descriptor noeud_principale, vertex_descriptor landmark, vector<vector<int> > &mat, int index_tab  ){
+
+	IndexMap index = get(vertex_index,graph_t);
+
+
+	  graph_traits<Graph_t>::vertex_iterator i, iend;
+
+	  pair<AdjacencyIterator,AdjacencyIterator> voisins = adjacent_vertices(noeud_principale,graph_t);
+
+	 /* for(; voisins.first != voisins.second ; ++voisins.first)
+	  {
+		  cout << index[*voisins.first] << endl;
+
+	  }
+
+	  cout << get(vertex_bundle,graph_t)[noeud_principale].name  << endl;
+*/
+
+	  mat[0][index_tab] = landmark;
+	  vector< vertex_descriptor > parent(num_vertices(graph_t));
+
+	  vector < vertex_descriptor > distance(num_vertices(graph_t));
+
+
+	 // dijkstra_shortest_paths(graph_t, noeud1, weight_map(get(&edge_info::weight, graph_t)));
+
+	  dijkstra_shortest_paths(graph_t, noeud_principale,
+			  boost::predecessor_map(boost::make_iterator_property_map(parent.begin(), get(boost::vertex_index, graph_t))).
+			                          distance_map(boost::make_iterator_property_map(distance.begin(), get(boost::vertex_index, graph_t))).
+									  weight_map(get(&edge_info::weight,graph_t)));
+
+
+
+	    DistanceMap distanceMap(&distance[0], index);
+
+
+	    	typedef std::vector<Graph_t::edge_descriptor> PathType;
+	        PathType path;
+	        cout << "node : " << landmark << endl;
+	        vertex_descriptor v = landmark;
+	        cout << "name vertex landmark " << get(vertex_bundle,graph_t)[v].name << endl;
+	        for(vertex_descriptor u = parent[v];
+	        u != v; // Keep tracking the path until we get to the source
+	        v = u, u = parent[v]) // Set the current vertex to the current predecessor,     and the predecessor to one level up
+	        {
+	           std::pair<Graph_t::edge_descriptor, bool> edgePair = boost::edge(u, v, graph_t);
+	           Graph_t::edge_descriptor edge = edgePair.first;
+	            path.push_back( edge );
+	        }
+
+	        // Write shortest path
+	        std::cout << "Shortest path from " << noeud_principale <<" to " << v << "  " << get(vertex_bundle,graph_t)[noeud_principale].name;
+	        	cout	<< " et noeuud  2 " << get(vertex_bundle,graph_t)[landmark].name << std::endl;
+	        float totalDistance = 0;
+	        for(PathType::reverse_iterator pathIterator = path.rbegin(); pathIterator !=       path.rend(); ++pathIterator)
+	        {
+	          std::cout << get(vertex_bundle,graph_t)[boost::source(*pathIterator, graph_t)].name << " -> " <<
+	        		  	  	  get(vertex_bundle,graph_t)[boost::target(*pathIterator, graph_t)].name
+	                    << " = " <<  get(boost::edge_bundle, graph_t)[*pathIterator].weight <<     std::endl;
+	          totalDistance = totalDistance + get(boost::edge_bundle, graph_t)[*pathIterator].weight;
+
+
+
+
+	        }
+
+	        mat[1][index_tab] =  distanceMap[landmark];
+
+
+	         std::cout << "Distance: " << distanceMap[landmark] << std::endl;
+
+
+}
+
+void test_thread()
+{
+	cout << "Cr 7" <<endl;
+}
 int main(int argc, char** argv)
 {
 
@@ -165,18 +257,7 @@ int main(int argc, char** argv)
   /* Puis après avoir ajouté des vertex et edges, je peux accéder par exemple à la liste des vertex comme suite: */
     /* Affiche le nom des sommets */
 
-  int selector =  0 ;
-  vertex_descriptor node_select;
 
-  vertex_descriptor u_in,u_out,v_in,v_out;
-
-  std::pair<inEdge, inEdge> inedge;
-
-  std::pair<outEdge, outEdge> outedge;
-
-  //node_id index = get(vertex_index,graph_t);
-
-  std::pair<VertexIterator, VertexIterator> it_2 = boost::vertices(graph_t);
  /*for( ; it_2.first != it_2.second; ++it_2.first)
   {
 	  node_select = *it_2.first;
@@ -295,49 +376,56 @@ for (EdgeIterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter){
 
   /* v2 , prendre noeud arrivée et de départ, chercher les plus court voisins et développé la matrice OT*/
 
-  vertex_descriptor noeud1, noeud2;
+  vertex_descriptor noeud_principale, node_landmark;
+
+  vector<int> landmark(5);
+
+  thread *threads[landmark.size()];
+
+  landmark[0] =49453;
+	  	 landmark[1] =34167;
+	  			 landmark[2] =54916;
+				 landmark[3] =589;
+				 landmark[4] =7786;
 
 
 
 
 
-  IndexMap index = get(vertex_index,graph_t);
+  noeud_principale = vertex(15000,graph_t);
 
 
-  graph_traits<Graph_t>::vertex_iterator i, iend;
+cout << landmark[0] << endl;
 
-  pair<AdjacencyIterator,AdjacencyIterator> voisins = adjacent_vertices(vertex(150,graph_t),graph_t);
+vector<vector<int> > mat(2,vector<int>(landmark.size()));
 
-  for(; voisins.first != voisins.second ; ++voisins.first)
-  {
-	  cout << index[*voisins.first] << endl;
+//boost::thread bthreads[landmark.size()] ;
 
-  }
+for(int c = 0; c < landmark.size(); c++)
+{
+	node_landmark = vertex(landmark[c],graph_t);
+	calcul_chemin( graph_t, noeud_principale, node_landmark , mat , c);
+	//threads[c] = new thread(calcul_chemin, graph_t, noeud_principale, node_landmark , mat , c);
+	//threads[c] = new thread(test_thread);
+	thread test_23(test_thread);
+	test_23.join();
+}
 
-  noeud1 = vertex(150,graph_t);
+for(int c = 0; c < landmark.size(); c++)
+{
+	threads[c]->join();
+	delete threads[c];
+}
+//alcul_chemin(graph_t,noeud_principale, node_landmark , mat , 0);
 
-  cout << get(vertex_bundle,graph_t)[noeud1].name  << endl;
+    for (int i=0; i<2; i++){
+        for (int j=0; j<landmark.size(); j++){
+            cout << mat[i][j]<<" ";
+        }
 
-
-
-  std::vector<vertex_descriptor> p(num_vertices(graph_t));
-  std::vector<int> d(num_vertices(graph_t));
-
-
-
-  	  dijkstra_shortest_paths(graph_t, noeud1,
-                              predecessor_map(boost::make_iterator_property_map(p.begin(), get(boost::vertex_index, graph_t))).
-                              distance_map(boost::make_iterator_property_map(d.begin(), get(boost::vertex_index, graph_t))));
-
-      std::cout << "distances and parents:" << std::endl;
-      graph_traits < Graph_t >::vertex_iterator vi, vend;
-      for (boost::tie(vi, vend) = vertices(graph_t); vi != vend; ++vi) {
-        std::cout << "distance(" << get(vertex_bundle,graph_t)[*vi].name << ") = " << d[*vi] << ", ";
-        std::cout << "parent(" << get(vertex_bundle,graph_t)[*vi].name << ") = " << get(vertex_bundle,graph_t)[p[*vi]].name << std::endl;
-      }
-      std::cout << std::endl;
-
-
+        cout <<endl;
+    }
+    std::cout << std::endl;
 }
 
 

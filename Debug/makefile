@@ -44,7 +44,7 @@ all: example
 example: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "example" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/home/lamure/Documents/developpement/boost/boost_1_67_0/stage/lib/ -L/home/lamure/Documents/developpement/boost/boost_1_67_0/stage/lib/libboost_system.so.1.67.0 -L/home/lamure/Documents/developpement/boost/boost_1_67_0/bin.v2/libs/system/build/gcc-4.8/release/threading-multi/libboost_system.so.1.67.0 -o "example" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
