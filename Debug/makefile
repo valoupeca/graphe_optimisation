@@ -38,19 +38,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: example
+all: libexample
 
 # Tool invocations
-example: $(OBJS) $(USER_OBJS)
+libexample: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/home/lamure/Documents/developpement/boost/boost_1_67_0/stage/lib/ -L/home/lamure/Documents/developpement/boost/boost_1_67_0/stage/lib/libboost_system.so.1.67.0 -L/home/lamure/Documents/developpement/boost/boost_1_67_0/bin.v2/libs/system/build/gcc-4.8/release/threading-multi/libboost_system.so.1.67.0 -o "example" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/home/lamure/Documents/developpement/boost/boost_1_67_0/stage/lib -shared -o "libexample" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(C_UPPER_DEPS)$(CXX_DEPS)$(OBJS)$(CPP_DEPS)$(C_DEPS) example
+	-$(RM) $(LIBRARIES)$(CC_DEPS)$(C++_DEPS)$(C_UPPER_DEPS)$(CXX_DEPS)$(OBJS)$(CPP_DEPS)$(C_DEPS) libexample
 	-@echo ' '
 
 .PHONY: all clean dependents

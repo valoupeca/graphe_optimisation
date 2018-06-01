@@ -405,10 +405,10 @@ for(int c = 0; c < landmark.size(); c++)
 {
 	node_landmark = vertex(landmark[c],graph_t);
 	calcul_chemin( graph_t, noeud_principale, node_landmark , mat , c);
-	//threads[c] = new thread(calcul_chemin, graph_t, noeud_principale, node_landmark , mat , c);
+	threads[c] = new thread(calcul_chemin, graph_t, noeud_principale, node_landmark , mat , c);
 	//threads[c] = new thread(test_thread);
-	thread test_23(test_thread);
-	test_23.join();
+	//thread test_23(test_thread);
+	//test_23.join();
 }
 
 for(int c = 0; c < landmark.size(); c++)
