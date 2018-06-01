@@ -226,8 +226,6 @@ void calcul_chemin(Graph_t graph_t,vertex_descriptor noeud_principale, vertex_de
 
 
 	         std::cout << "Distance: " << distanceMap[landmark] << std::endl;
-
-
 }
 
 int main(int argc, char** argv)
