@@ -208,7 +208,7 @@ void calcul_chemin(Graph_t graph_t,vertex_descriptor noeud_principale, vertex_de
 
 	        // Write shortest path
 	        std::cout << "Shortest path from " << noeud_principale <<" to " << v << "  " << get(vertex_bundle,graph_t)[noeud_principale].name;
-	        	cout	<< " et noeuud  2 " << get(vertex_bundle,graph_t)[landmark].name << std::endl;
+	        	cout	<< " et noeud d'arrivée " << get(vertex_bundle,graph_t)[landmark].name << std::endl;
 	        float totalDistance = 0;
 	        for(PathType::reverse_iterator pathIterator = path.rbegin(); pathIterator !=       path.rend(); ++pathIterator)
 	        {
@@ -372,21 +372,26 @@ for (EdgeIterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter){
 
   vertex_descriptor noeud_principale, node_landmark;
 
-  vector<int> landmark(5);
+  vector<int> landmark(10);
 
   thread *threads[landmark.size()];
 
   landmark[0] =49453;
-	  	 landmark[1] =34167;
-	  			 landmark[2] =54916;
-				 landmark[3] =589;
-				 landmark[4] =7786;
+  landmark[1] =34167;
+  landmark[2] =54916;
+ landmark[3] =589;
+ landmark[4] =7786;
+ landmark[5] =4570;
+ landmark[6] =15;
+landmark[7] =1725;
+landmark[8] =12546;
+landmark[9] =786;
 
 
 
 
 
-  noeud_principale = vertex(15000,graph_t);
+  noeud_principale = vertex(1,graph_t);
 
 
 cout << landmark[0] << endl;
