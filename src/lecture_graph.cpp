@@ -230,10 +230,6 @@ void calcul_chemin(Graph_t graph_t,vertex_descriptor noeud_principale, vertex_de
 
 }
 
-void test_thread()
-{
-	cout << "Cr 7" <<endl;
-}
 int main(int argc, char** argv)
 {
 
@@ -399,16 +395,12 @@ cout << landmark[0] << endl;
 
 vector<vector<int> > mat(2,vector<int>(landmark.size()));
 
-//boost::thread bthreads[landmark.size()] ;
-
 for(int c = 0; c < landmark.size(); c++)
 {
 	node_landmark = vertex(landmark[c],graph_t);
-	calcul_chemin( graph_t, noeud_principale, node_landmark , mat , c);
+
 	threads[c] = new thread(calcul_chemin, graph_t, noeud_principale, node_landmark , mat , c);
-	//threads[c] = new thread(test_thread);
-	//thread test_23(test_thread);
-	//test_23.join();
+
 }
 
 for(int c = 0; c < landmark.size(); c++)
@@ -416,7 +408,7 @@ for(int c = 0; c < landmark.size(); c++)
 	threads[c]->join();
 	delete threads[c];
 }
-//alcul_chemin(graph_t,noeud_principale, node_landmark , mat , 0);
+
 
     for (int i=0; i<2; i++){
         for (int j=0; j<landmark.size(); j++){
